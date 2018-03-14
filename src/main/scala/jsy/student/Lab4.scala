@@ -124,20 +124,18 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case (_,tgot) => throw StaticTypeError(tgot,e2,e)
       }
       // This looks sloppy ... I need to test it <----------------------------------------------------------------------
-      case Binary(Eq|Ne, e1, e2) => (hasFunctionTyp(typeof(env,e1)),hasFunctionTyp(typeof(env,e2))) match {
-        case (false,false) => TBool
-        case (true,_) => throw StaticTypeError(typeof(env,e1),e1,e)
-        case (_,true) => throw StaticTypeError(typeof(env,e2),e2,e)
+      // Also note that I am not sure if Undefined should pass through this, currently i think it does
+      case Binary(Eq|Ne, e1, e2) => {
+        val (typ1, typ2) = (typeof(env, e1), typeof(env, e2))           // Saving these since I need them more than once
+        val (fun1, fun2) = (hasFunctionTyp(typ1), hasFunctionTyp(typ2)) // Saving these since I need them more than once
+        if ((typ1 == typ2) && (!fun1 && !fun2)) TBool                   // Make sure we have no function type && e1,e2 have same type
+        else {
+          (fun1, fun2) match {                                          // Otherwise we will have an error to throw
+            case (true, _) => throw StaticTypeError(typeof(env, e1), e1, e)
+            case (_, true) => throw StaticTypeError(typeof(env, e2), e2, e)
+          }
+        }
       }
-        /*
-        // has function type then we need to return error
-        val (typ1, typ2) = (hasFunctionTyp(typeof(env,e1)),hasFunctionTyp(typeof(env,e2)))
-        if(!typ1 && !typ2) TBool
-        else{
-          if(typ1) throw StaticTypeError(typeof(env,e1),e1,e) else throw StaticTypeError(typeof(env,e2),e2,e)
-        */
-      //(hasFunctionTyp(e1),hasFunctionTyp(e2))
-
 
       case Binary(Lt|Le|Gt|Ge, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
         case (TNumber,TNumber) => TBool                   // Only number should be compared to other nuumbers  - TypeInequalityyNumber
@@ -153,7 +151,14 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       }
       case Binary(Seq, e1, e2) =>
         ???
-      case If(e1, e2, e3) =>
+      case If(e1, e2, e3) => (typeof(env,e1),typeof(env,e2),typeof(env,e3)) match {
+        case (TBool,TNumber,TNumber) => TNumber     // TypeIfNumber
+        case (TBool,TString,TString) => TString     // TypeeIfString
+        case (TBool,TBool,TBool) => TBool           // TypeIfBool
+        case (tgot,_,_) => throw StaticTypeError(tgot,e1,e)
+        case (_,tgot,_) => throw StaticTypeError(tgot,e2,e)
+        case (_,_,tgot) => throw StaticTypeError(tgot,e3,e)
+      }
       case Function(p, params, tann, e1) => {
         // Bind to env1 an environment that extends env with an appropriate binding if
         // the function is potentially recursive.
