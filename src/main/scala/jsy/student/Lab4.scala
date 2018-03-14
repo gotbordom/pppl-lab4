@@ -139,14 +139,21 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       //(hasFunctionTyp(e1),hasFunctionTyp(e2))
 
 
-      case Binary(Lt|Le|Gt|Ge, e1, e2) =>
-        ???
-      case Binary(And|Or, e1, e2) =>
-        ???
+      case Binary(Lt|Le|Gt|Ge, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
+        case (TNumber,TNumber) => TBool                   // Only number should be compared to other nuumbers  - TypeInequalityyNumber
+        case (TString,TString) => TBool                   // Only strings to strings                           - TypeInequalityString
+        case (tgot,_) => throw StaticTypeError(tgot,e1,e)
+        case (_,tgot) => throw StaticTypeError(tgot,e2,e)
+      }
+      case Binary(And|Or, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
+        case (TBool, TBool) => TBool                  // TypeAndOrNumber
+        case (tgot,_) => throw StaticTypeError(tgot,e1,e)
+        case (_,tgot) => throw StaticTypeError(tgot,e2,e)
+
+      }
       case Binary(Seq, e1, e2) =>
         ???
       case If(e1, e2, e3) =>
-        ???
       case Function(p, params, tann, e1) => {
         // Bind to env1 an environment that extends env with an appropriate binding if
         // the function is potentially recursive.
