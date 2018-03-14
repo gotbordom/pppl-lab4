@@ -45,7 +45,7 @@ def strictlyOrdered(t: Tree): Boolean = {
     case ((true,None),_) => (true,None)
     // case 3: we have a true and need to know if we are still true
     case ((true,Some(d)),h) => if(d < h) (true,Some(h)) else (false,Some(h))
-    case _ => {
+    //case _ => {
       println("Something is wrong.\n")
       (true,Some(1))
     }

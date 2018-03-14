@@ -103,7 +103,9 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Undefined => TUndefined        // Same as above
       case S(_) => TString                // " ... "
       case Var(x) => lookup(env,x)
-      case Decl(mode, x, e1, e2) =>  ???
+      case Decl(mode, x, e1, e2) =>  (typeof(env,e1),typeof(extend(env,x,typeof(env,e1)),e2)) match {  // Match on the tp1 and typ2, but make sure to update enviroment for e2 with e1's type
+        case (_,typ2) => typ2
+      }
       case Unary(Neg, e1) => typeof(env, e1) match {
         case TNumber => TNumber
         case tgot => err(tgot, e1)
@@ -158,6 +160,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case (TBool,TNumber,TNumber) => TNumber     // TypeIfNumber
         case (TBool,TString,TString) => TString     // TypeeIfString
         case (TBool,TBool,TBool) => TBool           // TypeIfBool
+        case (TBool,TUndefined,TUndefined) => TUndefined // I need to write an if statement to make this look nicer...
         case (tgot,_,_) => throw StaticTypeError(tgot,e1,e)
         case (_,tgot,_) => throw StaticTypeError(tgot,e2,e)
         case (_,_,tgot) => throw StaticTypeError(tgot,e3,e)
