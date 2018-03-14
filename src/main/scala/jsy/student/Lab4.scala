@@ -151,6 +151,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       }
       case Binary(Seq, e1, e2) =>
         ???
+      // Should this also allow undefined ? < --------------------------------------------------------------------------
       case If(e1, e2, e3) => (typeof(env,e1),typeof(env,e2),typeof(env,e3)) match {
         case (TBool,TNumber,TNumber) => TNumber     // TypeIfNumber
         case (TBool,TString,TString) => TString     // TypeeIfString
