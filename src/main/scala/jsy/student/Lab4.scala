@@ -8,7 +8,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
   
   /*
    * CSCI 3155: Lab 4
-   * <Your Name>
+   * <Anthony Tracy>
    * 
    * Partner: <Your Partner's Name>
    * Collaborators: <Any Collaborators>
@@ -38,25 +38,29 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
   /* Lists */
   
   def compressRec[A](l: List[A]): List[A] = l match {
-    case Nil | _ :: Nil => ???
-    case h1 :: (t1 @ (h2 :: _)) => ???
+    case Nil => Nil
+    case h1 :: Nil => h1 :: Nil
+    case h1 :: (t1 @ (h2 :: _)) => if(h1!=h2) h1 :: compressRec(t1) else compressRec(t1)
   }
   
   def compressFold[A](l: List[A]): List[A] = l.foldRight(Nil: List[A]){
-    (h, acc) => ???
+    (h, acc) => if(acc.isEmpty || acc.head != h) h :: acc else acc
   }
   
   def mapFirst[A](l: List[A])(f: A => Option[A]): List[A] = l match {
-    case Nil => ???
-    case h :: t => ???
+    case Nil => Nil
+    case h :: t => f(h) match {
+      case None => h :: mapFirst(t)(f)
+      case Some(i) => i :: t
+    }
   }
   
   /* Trees */
 
   def foldLeft[A](t: Tree)(z: A)(f: (A, Int) => A): A = {
     def loop(acc: A, t: Tree): A = t match {
-      case Empty => ???
-      case Node(l, d, r) => ???
+      case Empty => acc                                // we are at a leaf, return the data in the parent node
+      case Node(l, d, r) => loop(f(loop(acc,l),d),r)   // We still have left's to fold through, and act the function on each inner loop
     }
     loop(z, t)
   }
@@ -70,12 +74,15 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
     l.foldLeft(Empty: Tree){ (acc, i) => acc insert i }
 
   def strictlyOrdered(t: Tree): Boolean = {
-    val (b, _) = foldLeft(t)((true, None: Option[Int])){
-      ???
+    val (b, _) = foldLeft(t)((true, None: Option[Int])){    // Passing in tuple () so the acc in this should be the same, while the head would be the next value
+      (acc,h) => acc match {
+        case (false,_) => (false,Some(h))
+        case (true,None) => (true,Some(h))
+        case (true, Some(d)) => if (d<h) (true,Some(h)) else (false,Some(h))
+      }
     }
     b
   }
-
   /* Type Inference */
 
   // While this helper function is completely given, this function is
@@ -91,11 +98,11 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
 
     e match {
       case Print(e1) => typeof(env, e1); TUndefined
-      case N(_) => ???
-      case B(_) => ???
-      case Undefined => ???
-      case S(_) => ???
-      case Var(x) => ???
+      case N(_) => TNumber
+      case B(_) => TBool
+      case Undefined => TUndefined
+      case S(_) => TString
+      case Var(x) => lookup(env,x)
       case Decl(mode, x, e1, e2) => ???
       case Unary(Neg, e1) => typeof(env, e1) match {
         case TNumber => TNumber
