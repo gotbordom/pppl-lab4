@@ -98,24 +98,47 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
 
     e match {
       case Print(e1) => typeof(env, e1); TUndefined
-      case N(_) => TNumber
-      case B(_) => TBool
-      case Undefined => TUndefined
-      case S(_) => TString
+      case N(_) => TNumber                // By this point in code we can just return the type
+      case B(_) => TBool                  // Same as above
+      case Undefined => TUndefined        // Same as above
+      case S(_) => TString                // " ... "
       case Var(x) => lookup(env,x)
-      case Decl(mode, x, e1, e2) => ???
+      case Decl(mode, x, e1, e2) =>  ???
       case Unary(Neg, e1) => typeof(env, e1) match {
         case TNumber => TNumber
         case tgot => err(tgot, e1)
       }
-      case Unary(Not, e1) =>
-        ???
-      case Binary(Plus, e1, e2) =>
-        ???
-      case Binary(Minus|Times|Div, e1, e2) => 
-        ???
-      case Binary(Eq|Ne, e1, e2) =>
-        ???
+      case Unary(Not, e1) => typeof(env,e1) match {
+        case TBool => TBool
+        case tgot => err(tgot, e1)
+      }
+      case Binary(Plus, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
+        case (TNumber,TNumber) => TNumber                 // Addition can be done with only numbers      - TypePlusArith
+        case (TString,TString) => TString                 // Concatonation can only be done with strings - TypePlusString
+        case (tgot,_) => throw StaticTypeError(tgot,e1,e) // If e1 is anything else
+        case (_,tgot) => throw StaticTypeError(tgot,e2,e) // If e2 is ANything else
+      }
+      case Binary(Minus|Times|Div, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
+        case (TNumber,TNumber) => TNumber
+        case (tgot,_) => throw StaticTypeError(tgot,e1,e)
+        case (_,tgot) => throw StaticTypeError(tgot,e2,e)
+      }
+      // This looks sloppy ... I need to test it <----------------------------------------------------------------------
+      case Binary(Eq|Ne, e1, e2) => (hasFunctionTyp(typeof(env,e1)),hasFunctionTyp(typeof(env,e2))) match {
+        case (false,false) => TBool
+        case (true,_) => throw StaticTypeError(typeof(env,e1),e1,e)
+        case (_,true) => throw StaticTypeError(typeof(env,e2),e2,e)
+      }
+        /*
+        // has function type then we need to return error
+        val (typ1, typ2) = (hasFunctionTyp(typeof(env,e1)),hasFunctionTyp(typeof(env,e2)))
+        if(!typ1 && !typ2) TBool
+        else{
+          if(typ1) throw StaticTypeError(typeof(env,e1),e1,e) else throw StaticTypeError(typeof(env,e2),e2,e)
+        */
+      //(hasFunctionTyp(e1),hasFunctionTyp(e2))
+
+
       case Binary(Lt|Le|Gt|Ge, e1, e2) =>
         ???
       case Binary(And|Or, e1, e2) =>
