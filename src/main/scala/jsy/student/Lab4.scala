@@ -149,8 +149,10 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case (_,tgot) => throw StaticTypeError(tgot,e2,e)
 
       }
-      case Binary(Seq, e1, e2) =>
-        ???
+      case Binary(Seq, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
+        case (_,typ2) => typ2
+        //case (,)
+      }
       // Should this also allow undefined ? < --------------------------------------------------------------------------
       case If(e1, e2, e3) => (typeof(env,e1),typeof(env,e2),typeof(env,e3)) match {
         case (TBool,TNumber,TNumber) => TNumber     // TypeIfNumber
