@@ -1,6 +1,7 @@
 package jsy.student
 
 import jsy.lab4.Lab4Like
+import sun.misc.FloatingDecimal.BinaryToASCIIConverter
 
 object Lab4 extends jsy.util.JsyApplication with Lab4Like {
   import jsy.lab4.ast._
@@ -156,14 +157,11 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         //case (,)
       }
       // Should this also allow undefined ? < --------------------------------------------------------------------------
-      case If(e1, e2, e3) => (typeof(env,e1),typeof(env,e2),typeof(env,e3)) match {
-        case (TBool,TNumber,TNumber) => TNumber     // TypeIfNumber
-        case (TBool,TString,TString) => TString     // TypeeIfString
-        case (TBool,TBool,TBool) => TBool           // TypeIfBool
-        case (TBool,TUndefined,TUndefined) => TUndefined // I need to write an if statement to make this look nicer...
-        case (tgot,_,_) => err(tgot,e1)//throw StaticTypeError(tgot,e1,e)
-        case (_,tgot,_) => err(tgot,e2)//throw StaticTypeError(tgot,e2,e)
-        case (_,_,tgot) => err(tgot,e2)//throw StaticTypeError(tgot,e3,e)
+      case If(e1, e2, e3) => {
+        val (typ1,typ2,typ3) = (typeof(env,e1),typeof(env,e2),typeof(env,e3))
+        if (typ2==typ3){
+          if(typ1==TBool) typ2 else err(typ1,e1)  // Throw error since e1 != bool
+        } else err(typ2,e2)                       // Throw error since e1.Type != e2.Type
       }
       case Function(p, params, tann, e1) => {
         // Bind to env1 an environment that extends env with an appropriate binding if
@@ -187,7 +185,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
           tret
         case tgot => err(tgot, e1)
       }
-      case Obj(fields) => ???
+      case Obj(fields) => TObj(fields.map( {case (str,exp) => (str,typeof(env,exp))}))
       case GetField(e1, f) =>
         val typ1 = typeof(env,e1)
         if (typ1 == lookup(env,f)) typ1 else err(typ1,e1)
@@ -236,7 +234,11 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
 
   /* This should be the same code as from Lab 3 */
   def iterate(e0: Expr)(next: (Expr, Int) => Option[Expr]): Expr = {
-    def loop(e: Expr, n: Int): Expr = ???
+    def loop(e: Expr, n: Int): Expr = next(e,n) match {
+      case None => e
+      case Some(part_e) => loop(part_e,n+1)
+      case _ => throw StuckError(e)
+    }
     loop(e0, 0)
   }
 
@@ -314,7 +316,34 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       /* Base Cases: Do Rules */
       case Print(v1) if isValue(v1) => println(pretty(v1)); Undefined
         /***** Cases needing adapting from Lab 3. */
-      case Unary(Neg, v1) if isValue(v1) => ???
+      case Unary(Neg, N(n)) if isValue(N(n)) => N(-n)
+      case Unary(Not,B(b)) => B(!b)
+
+
+      case Binary(bop,e1,e2) => bop match {
+        // Sequence
+        case Seq => step(e1); step(e2)
+        // Artitmetic and String  concatination
+        case Plus => (e1, e2) match {
+          case (S(s1), S(s2)) => S(s1 + s2)
+          case (N(n1), N(n2)) => N(n1 + n2)
+        }
+        case Minus => (e1, e2) match {
+          case (N(n1), N(n2)) => N(n1 - n2)
+        }
+        case Times => (e1, e2) match {
+          case (N(n1), N(n2)) => N(n1 * n2)
+        }
+        case Div => (e1, e2) match {
+          case (N(n1), N(n2)) => N(n1 / n2) // Nevermind devide by zero in scala returns inf ...else Undefined
+        }
+        // Inequalities
+
+      }
+
+
+
+
         /***** More cases here */
       case Call(v1, args) if isValue(v1) =>
         v1 match {
