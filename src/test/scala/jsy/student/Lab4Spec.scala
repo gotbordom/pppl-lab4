@@ -329,6 +329,17 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       assertResult(baseU){
         typeof(empty,decl3)
       }
+
+
+     /*  Now to test the Step fucntions */
+     //"DoNeg" should "perform step on neg" in {
+
+
+
+     //}
+
+
+
     }
 
   }
