@@ -117,13 +117,13 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Binary(Plus, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
         case (TNumber,TNumber) => TNumber                 // Addition can be done with only numbers      - TypePlusArith
         case (TString,TString) => TString                 // Concatonation can only be done with strings - TypePlusString
-        case (tgot,_) => throw StaticTypeError(tgot,e1,e) // If e1 is anything else
-        case (_,tgot) => throw StaticTypeError(tgot,e2,e) // If e2 is ANything else
+        case (tgot,_) => err(tgot,e1)//throw StaticTypeError(tgot,e1,e) // If e1 is anything else
+        case (_,tgot) => err(tgot,e2)//throw StaticTypeError(tgot,e2,e) // If e2 is ANything else
       }
       case Binary(Minus|Times|Div, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
         case (TNumber,TNumber) => TNumber
-        case (tgot,_) => throw StaticTypeError(tgot,e1,e)
-        case (_,tgot) => throw StaticTypeError(tgot,e2,e)
+        case (tgot,_) => err(tgot,e1)//throw StaticTypeError(tgot,e1,e)
+        case (_,tgot) => err(tgot,e2)//throw StaticTypeError(tgot,e2,e)
       }
       // This looks sloppy ... I need to test it <----------------------------------------------------------------------
       // Also note that I am not sure if Undefined should pass through this, currently i think it does
@@ -133,8 +133,8 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         if ((typ1 == typ2) && (!fun1 && !fun2)) TBool                   // Make sure we have no function type && e1,e2 have same type
         else {
           (fun1, fun2) match {                                          // Otherwise we will have an error to throw
-            case (true, _) => throw StaticTypeError(typeof(env, e1), e1, e)
-            case (_, true) => throw StaticTypeError(typeof(env, e2), e2, e)
+            case (true, _) => err(typeof(env, e1),e1)//throw StaticTypeError(typeof(env, e1), e1, e)
+            case (_, true) => err(typeof(env, e1),e2)//throw StaticTypeError(typeof(env, e2), e2, e)
           }
         }
       }
@@ -142,13 +142,13 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Binary(Lt|Le|Gt|Ge, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
         case (TNumber,TNumber) => TBool                   // Only number should be compared to other nuumbers  - TypeInequalityyNumber
         case (TString,TString) => TBool                   // Only strings to strings                           - TypeInequalityString
-        case (tgot,_) => throw StaticTypeError(tgot,e1,e)
-        case (_,tgot) => throw StaticTypeError(tgot,e2,e)
+        case (tgot,_) => err(tgot,e1)//throw StaticTypeError(tgot,e1,e)
+        case (_,tgot) => err(tgot,e2)//throw StaticTypeError(tgot,e2,e)
       }
       case Binary(And|Or, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
         case (TBool, TBool) => TBool                  // TypeAndOrNumber
-        case (tgot,_) => throw StaticTypeError(tgot,e1,e)
-        case (_,tgot) => throw StaticTypeError(tgot,e2,e)
+        case (tgot,_) => err(tgot,e1)//throw StaticTypeError(tgot,e1,e)
+        case (_,tgot) => err(tgot,e2)//throw StaticTypeError(tgot,e2,e)
 
       }
       case Binary(Seq, e1, e2) => (typeof(env,e1),typeof(env,e2)) match {
@@ -161,9 +161,9 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case (TBool,TString,TString) => TString     // TypeeIfString
         case (TBool,TBool,TBool) => TBool           // TypeIfBool
         case (TBool,TUndefined,TUndefined) => TUndefined // I need to write an if statement to make this look nicer...
-        case (tgot,_,_) => throw StaticTypeError(tgot,e1,e)
-        case (_,tgot,_) => throw StaticTypeError(tgot,e2,e)
-        case (_,_,tgot) => throw StaticTypeError(tgot,e3,e)
+        case (tgot,_,_) => err(tgot,e1)//throw StaticTypeError(tgot,e1,e)
+        case (_,tgot,_) => err(tgot,e2)//throw StaticTypeError(tgot,e2,e)
+        case (_,_,tgot) => err(tgot,e2)//throw StaticTypeError(tgot,e3,e)
       }
       case Function(p, params, tann, e1) => {
         // Bind to env1 an environment that extends env with an appropriate binding if
@@ -181,14 +181,16 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       }
       case Call(e1, args) => typeof(env, e1) match {
         case TFunction(params, tret) if (params.length == args.length) =>
-          (params zip args).foreach {
-            ???
+          (params zip args).foreach {  // (('str',MTyp(mode,type)),args)
+            case ((_,MTyp(_,typ)),arg) => if (typeof(env,arg) != typ) err(typeof(env,arg),arg)
           };
           tret
         case tgot => err(tgot, e1)
       }
       case Obj(fields) => ???
-      case GetField(e1, f) => ???
+      case GetField(e1, f) =>
+        val typ1 = typeof(env,e1)
+        if (typ1 == lookup(env,f)) typ1 else err(typ1,e1)
     }
   }
   
