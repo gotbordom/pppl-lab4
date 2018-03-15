@@ -163,34 +163,39 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
           if(typ1==TBool) typ2 else err(typ1,e1)  // Throw error since e1 != bool
         } else err(typ2,e2)                       // Throw error since e1.Type != e2.Type
       }
-      case Function(p, params, tann, e1) =>
+      case Function(p, params, tann, e1) => {
         // Bind to env1 an environment that extends env with an appropriate binding if
         // the function is potentially recursive.
         val env1 = (p, tann) match {
-          /***** Add cases here *****/
-          case (Some(name),Some(ann)) =>
-            val t = TFunction(params,ann)
-            extend(env,name,MTyp(MConst,t))
-          case (None,_) => env
+          /** *** Add cases here *****/
+          case (Some(name), Some(ann)) =>
+            val t = TFunction(params, ann)
+            extend(env, name,  t)
+          case (None, _) => env
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with bindings for params.
 
         // This needs to be done in every case that we didn't throw an error
         val env2 = params.foldLeft(env1) {
-          case (acc,(str,mtype)) => extend(acc,str,mtype)
+          case (acc, (str, MTyp(_,typ))) => extend(acc, str,typ)
         }
+        // return type of e1
+
         // Infer the type of the function body
-        tann match{
-          case None => TFunction(params,typeof(env2,e1))
+
+        tann match {
+          case None => TFunction(params, typeof(env2, e1))
           case Some(ann) =>
-            //val tmp  = typeof(env2,e1)
-            //if(ann == tmp)
-            TFunction(params,typeof(env2,e1))
-            //else
-            //  err(typeof(env2,e1),e1)
+            val tmp  = typeof(env2,e1)
+            if(ann == tmp)
+              TFunction(params, typeof(env2, e1))
+            else
+              err(typeof(env2,e1),e1)
         }
+
         // Check with the possibly annotated return type
+      }
 
       case Call(e1, args) => typeof(env, e1) match {
         case TFunction(params, tret) if (params.length == args.length) =>
@@ -273,8 +278,9 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Var(y) => if(y==x) esub else e
       case Decl(mode, y, e1, e2) => if(y!=x) Decl(mode,y,substitute(e1,esub,x),substitute(e2,esub,x)) else Decl(mode,y,substitute(e1,esub,x),e2)
         /***** Cases needing adapting from Lab 3 */
-      case Function(p, params, tann, e1) =>
-        ???
+      case Function(p, params, tann, e1) => p match {
+        case None
+      }
       case Call(e1, args) => ???
         /***** New cases for Lab 4 */
       case Obj(fields) => ???
