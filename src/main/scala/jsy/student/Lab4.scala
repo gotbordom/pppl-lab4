@@ -186,9 +186,13 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case tgot => err(tgot, e1)
       }
       case Obj(fields) => TObj(fields.map( {case (str,exp) => (str,typeof(env,exp))}))
-      case GetField(e1, f) =>
-        val typ1 = typeof(env,e1)
-        if (typ1 == lookup(env,f)) typ1 else err(typ1,e1)
+      case GetField(e1, f) => typeof(env,e1) match {
+        case TObj(fields) => fields.get(f) match {
+          case Some(typ) => typ
+          case None => err(typeof(env,e1),e1)
+        }
+        case tgot => err(tgot,e1)
+      }
     }
   }
   
